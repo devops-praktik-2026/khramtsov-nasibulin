@@ -5,6 +5,11 @@
 на своём ноутбуке до установки версии на сервер, который сами же опишете
 кодом.
 
+## Состав пары
+
+- Andrey — [@adev05](https://github.com/adev05)
+- Sergey — [@zefercka](https://github.com/zefercka)
+
 ---
 
 ##  (занятие 1)
