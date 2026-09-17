@@ -60,7 +60,7 @@ def test_read_missing_account_returns_404(client):
 def test_list_is_empty_before_any_account(client):
     response = client.get("/accounts")
 
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert response.json() == []
 
 
