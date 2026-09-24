@@ -13,6 +13,7 @@ def test_create_order_returns_201(client: TestClient):
     assert body["account_id"] == payload["account_id"]
     assert body["item"] == payload["item"]
     assert body["quantity"] == payload["quantity"]
+    assert "created_at" in body
 
 
 @pytest.mark.parametrize(
