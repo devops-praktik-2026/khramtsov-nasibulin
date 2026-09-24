@@ -46,6 +46,7 @@ paths:
                 account_id: 7
                 item: Кофемолка
                 quantity: 2
+                created_at: '2026-09-24T10:00:00Z'
         '404':
           description: Клиент с указанным номером не существует
           content:
@@ -101,6 +102,7 @@ paths:
                   account_id: 7
                   item: Кофемолка
                   quantity: 2
+                  created_at: '2026-09-24T10:00:00Z'
         '422':
           description: Параметр запроса не проходит проверку
           content:
@@ -129,6 +131,7 @@ paths:
                 account_id: 7
                 item: Кофемолка
                 quantity: 2
+                created_at: '2026-09-24T10:00:00Z'
         '404':
           description: Заказа с таким номером нет
           content:
@@ -192,6 +195,7 @@ components:
         - account_id
         - item
         - quantity
+        - created_at
       properties:
         id:
           type: integer
@@ -212,6 +216,11 @@ components:
           type: integer
           minimum: 1
           description: Количество товара
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Время создания заказа
 
     CreateOrderRequest:
       type: object
