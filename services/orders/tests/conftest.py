@@ -39,4 +39,4 @@ def client() -> Iterator[TestClient]:
 
 @pytest.fixture()
 def order_payload() -> dict:
-    return {"name": "Иван Петров", "email": "ivan@example.com", "phone": "+7 900 000-00-00"}
+    return {"account_id": 1, "item": "cool-item", "quantity": 1}
