@@ -1,0 +1,282 @@
+openapi: 3.1.0
+info:
+  title: Сервис заказов
+  version: 1.0.0
+  description: >-
+    Машинно-читаемый контракт сервиса заказов. Изменения контракта вносятся
+    только через pull request в основную ветку.
+
+servers:
+  - url: http://localhost:8002
+    description: Локальный запуск
+  - url: http://orders:8000
+    description: Docker Compose
+
+tags:
+  - name: Заказы
+    description: Создание и чтение заказов
+
+paths:
+  /orders:
+    post:
+      tags:
+        - Заказы
+      operationId: createOrder
+      summary: Создать заказ
+      description: Создаёт заказ для существующего клиента.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            example:
+              account_id: 7
+              item: Кофемолка
+              quantity: 2
+      responses:
+        '201':
+          description: Заказ создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                id: 42
+                account_id: 7
+                item: Кофемолка
+                quantity: 2
+                created_at: '2026-09-24T10:00:00Z'
+        '404':
+          description: Клиент с указанным номером не существует
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: Клиент 7 не найден
+        '422':
+          description: Поле отсутствует или нарушено ограничение поля
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+              example:
+                detail:
+                  - loc:
+                      - body
+                      - quantity
+                    msg: Количество должно быть не меньше 1
+        '503':
+          description: Сервис клиентов временно недоступен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: Сервис клиентов временно недоступен
+
+    get:
+      tags:
+        - Заказы
+      operationId: listOrders
+      summary: Получить заказы клиента
+      description: >-
+        Возвращает только заказы указанного клиента. Если заказов нет,
+        возвращается пустой список с кодом 200.
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: Список заказов клиента
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+              example:
+                - id: 42
+                  account_id: 7
+                  item: Кофемолка
+                  quantity: 2
+                  created_at: '2026-09-24T10:00:00Z'
+        '422':
+          description: Параметр запроса не проходит проверку
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+  /orders/{order_id}:
+    get:
+      tags:
+        - Заказы
+      operationId: getOrder
+      summary: Получить заказ по номеру
+      description: Возвращает один заказ по присвоенному номеру.
+      parameters:
+        - $ref: '#/components/parameters/OrderId'
+      responses:
+        '200':
+          description: Заказ найден
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+              example:
+                id: 42
+                account_id: 7
+                item: Кофемолка
+                quantity: 2
+                created_at: '2026-09-24T10:00:00Z'
+        '404':
+          description: Заказа с таким номером нет
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                detail: Заказ 42 не найден
+        '422':
+          description: Номер заказа не является положительным целым числом
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+
+components:
+  parameters:
+    AccountId:
+      name: account_id
+      in: query
+      required: true
+      description: Номер клиента
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Максимальное количество заказов в ответе
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 200
+        default: 50
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: Сколько первых заказов пропустить
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    OrderId:
+      name: order_id
+      in: path
+      required: true
+      description: Номер заказа
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+
+  schemas:
+    Order:
+      type: object
+      required:
+        - id
+        - account_id
+        - item
+        - quantity
+        - created_at
+      properties:
+        id:
+          type: integer
+          format: int64
+          minimum: 1
+          readOnly: true
+          description: Номер заказа, присвоенный сервисом
+        account_id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Номер клиента
+        item:
+          type: string
+          minLength: 1
+          description: Название товара
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество товара
+        created_at:
+          type: string
+          format: date-time
+          readOnly: true
+          description: Время создания заказа
+
+    CreateOrderRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - account_id
+        - item
+        - quantity
+      properties:
+        account_id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Номер существующего клиента
+        item:
+          type: string
+          minLength: 1
+          description: Название товара
+        quantity:
+          type: integer
+          minimum: 1
+          description: Количество товара
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Понятное описание ошибки
+
+    ValidationErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: array
+          description: Список ошибок с указанием проблемных полей
+          items:
+            $ref: '#/components/schemas/ValidationError'
+
+    ValidationError:
+      type: object
+      required:
+        - loc
+        - msg
+      properties:
+        loc:
+          type: array
+          description: Путь к ошибочному полю
+          items:
+            oneOf:
+              - type: string
+              - type: integer
+        msg:
+          type: string
+          description: Понятное описание проблемы
