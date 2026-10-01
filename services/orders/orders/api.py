@@ -1,6 +1,7 @@
 """Запросы, которые умеет обрабатывать сервис заказов."""
 
-from fastapi import APIRouter, Depends, HTTPException, Path, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from orders.db import get_session
@@ -42,6 +43,7 @@ def get_order(
     order_id: int = Path(ge=1, le=2**63 - 1), session: Session = Depends(get_session)
 ) -> Order:
     return _get_or_404(session, order_id)
+
 
 @router.get("", response_model=list[OrderRead], summary="Список заказов клиента")
 def list_orders(
