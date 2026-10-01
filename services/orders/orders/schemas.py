@@ -24,5 +24,6 @@ class OrderCreate(BaseOrder):
 class OrderRead(BaseOrder):
     """Схема самого заказа."""
 
+    quantity: int = Field(ge=1)
     id: int
     created_at: datetime
