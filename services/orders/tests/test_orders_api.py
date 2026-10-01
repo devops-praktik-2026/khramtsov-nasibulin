@@ -2,8 +2,9 @@ import pytest
 from fastapi.testclient import TestClient
 
 
-def test_create_order_returns_201(client: TestClient):
-    payload = {"account_id": 1, "item": "Кофемолка", "quantity": 2}
+@pytest.mark.parametrize("quantity", [1, 2])
+def test_create_order_returns_201(client: TestClient, quantity: int):
+    payload = {"account_id": 1, "item": "Кофемолка", "quantity": quantity}
 
     response = client.post("/orders", json=payload)
 
