@@ -55,3 +55,25 @@ def test_get_order_returns_200_if_found(client: TestClient, order_payload: dict)
     assert body["item"] == payload["item"]
     assert body["quantity"] == payload["quantity"]
     assert "created_at" in body
+
+
+@pytest.mark.parametrize(
+    "order_id",
+    argvalues=[0, -1, 2**63, "это-не-число"],
+)
+def test_get_order_invalid_id_returns_422(client: TestClient, order_id):
+    response = client.get(f"/orders/{order_id}")
+
+    assert response.status_code == 422
+
+
+@pytest.mark.parametrize(
+    "order_id",
+    argvalues=[1, 2**63 - 1],
+)
+def test_get_order_boundary_id_passes_validation(client: TestClient, order_id):
+    """Граничные значения проходят валидацию Path: 404, а не 422."""
+
+    response = client.get(f"/orders/{order_id}")
+
+    assert response.status_code == 404
