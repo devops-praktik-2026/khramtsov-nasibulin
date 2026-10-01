@@ -32,3 +32,26 @@ def test_invalid_payload_returns_422(client, order_payload, broken_field):
     response = client.post("/orders", json=payload)
 
     assert response.status_code == 422
+
+
+def test_get_order_returns_404_if_not_found(client: TestClient):
+    response = client.get("/orders/1")
+
+    assert response.status_code == 404
+
+
+def test_get_order_returns_200_if_found(client: TestClient, order_payload: dict):
+    payload = order_payload | {"quantity": 2}
+    create_response = client.post("/orders", json=payload)
+    assert create_response.status_code == 201
+    order_id = create_response.json()["id"]
+
+    response = client.get(f"/orders/{order_id}")
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["id"] == order_id
+    assert body["account_id"] == payload["account_id"]
+    assert body["item"] == payload["item"]
+    assert body["quantity"] == payload["quantity"]
+    assert "created_at" in body
