@@ -1,6 +1,6 @@
 """Запросы, которые умеет обрабатывать сервис заказов."""
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Query, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -28,7 +28,7 @@ def _get_or_404(session: Session, order_id: int) -> Order:
     status_code=status.HTTP_201_CREATED,
     summary="Создать заказ",
 )
-def create_account(payload: OrderCreate, session: Session = Depends(get_session)) -> Order:
+def create_order(payload: OrderCreate, session: Session = Depends(get_session)) -> Order:
     order = Order(**payload.model_dump())
     session.add(order)
     session.commit()
@@ -36,6 +36,13 @@ def create_account(payload: OrderCreate, session: Session = Depends(get_session)
     session.refresh(order)
 
     return order
+
+
+@router.get("/{order_id}", response_model=OrderRead, summary="Получить заказ")
+def get_order(
+    order_id: int = Path(ge=1, le=2**63 - 1), session: Session = Depends(get_session)
+) -> Order:
+    return _get_or_404(session, order_id)
 
 
 @router.get("", response_model=list[OrderRead], summary="Список заказов клиента")
