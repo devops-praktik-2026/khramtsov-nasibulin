@@ -72,3 +72,19 @@ jobs:
 
       - name: Показать размеры образов
         run: docker images --format "{{.Repository}}:{{.Tag}}  {{.Size}}" | grep ':ci'
+
+  secrets-scan:
+    name: Поиск пароль
+    runs-on: ubuntu-latest
+    env:
+      VERSION: 8.21.2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Поставить gitleaks
+        run:
+          URL=https://github.com/gitleaks/gitleaks/releases/download
+          curl -sSL"$URL/v$VERSION/gitleaks_${VERSION}_linux_x64.tar.gz" | tar -xz gitleaks
+      - name: Искать пароли во всей истории
+        run: ./gitleaks git . --redact
