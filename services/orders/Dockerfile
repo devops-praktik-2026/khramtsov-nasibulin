@@ -20,6 +20,8 @@ COPY --from=builder /install /usr/local
 
 WORKDIR /app
 COPY orders ./orders
+COPY alembic.ini ./
+COPY migrations ./migrations
 
 USER app
 EXPOSE 8000
