@@ -1,0 +1,10 @@
+# В контекст сборки входят только зависимости и исходники сервиса.
+*
+!pyproject.toml
+!alembic.ini
+!migrations/
+!migrations/**
+!orders/
+!orders/**
+**/__pycache__/
+**/*.py[cod]
