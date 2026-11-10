@@ -1,20 +1,27 @@
+- name: Проверить наличие открытых ключей
+  ansible.builtin.assert:
+    that: deploy_public_keys | length > 0
+    fail_msg: Передайте открытые ключи в deploy_public_keys (см. vars.example.yml).
 
-# Что здесь должно появиться:
-#   - обновление списка пакетов
-#   - системные зависимости, которые нужны приложению
-#   - каталоги под приложение с правильным владельцем
-#   - ключи доступа второго участника пары
-#
-# Каждый шаг пишется так, чтобы повторный запуск ничего не менял.
-# Не «выполни команду mkdir», а «каталог должен существовать»: первая
-# формулировка ломается при повторе, вторая — нет.
-#
-# Подсказка для первых шагов:
-#   ansible.builtin.apt      пакеты
-#   ansible.builtin.file     каталоги и права
-#   ansible.builtin.user     пользователи
-#   ansible.posix.authorized_key   ключи доступа
+- name: Установить системные зависимости
+  ansible.builtin.apt:
+    name: [python3-venv, python3-pip, supervisor, ca-certificates]
+    state: present
+    update_cache: true
+    cache_valid_time: 3600
 
-- name: Заглушка, чтобы сценарий запускался до того, как вы его напишете
-  ansible.builtin.debug:
-    msg: "Роль base пока пустая."
+- name: Создать каталог приложения
+  ansible.builtin.file:
+    path: /opt/orders
+    state: directory
+    owner: deploy
+    group: deploy
+    mode: '0755'
+
+- name: Добавить открытые ключи участников
+  ansible.posix.authorized_key:
+    user: deploy
+    key: "{{ item }}"
+    state: present
+    exclusive: false
+  loop: "{{ deploy_public_keys }}"

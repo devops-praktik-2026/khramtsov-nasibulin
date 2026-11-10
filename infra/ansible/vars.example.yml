@@ -1,0 +1,6 @@
+# Скопируйте в vars.local.yml и вставьте ОТКРЫТЫЕ ключи участников.
+deploy_public_keys:
+  - "ssh-ed25519 REPLACE_WITH_FIRST_PUBLIC_KEY participant-1"
+  - "ssh-ed25519 REPLACE_WITH_SECOND_PUBLIC_KEY participant-2"
+
+orders_accounts_url: http://host.docker.internal:8001

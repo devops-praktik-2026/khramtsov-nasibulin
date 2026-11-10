@@ -1,0 +1,5 @@
+orders_version: '0.1.0'
+orders_wheel: "{{ playbook_dir }}/../../dist/orders-{{ orders_version }}-py3-none-any.whl"
+orders_accounts_url: http://host.docker.internal:8001
+orders_accounts_timeout_seconds: 2.0
+orders_database_url: sqlite:////opt/orders/orders.db

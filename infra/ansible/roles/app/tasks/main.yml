@@ -1,24 +1,71 @@
+- name: Передать wheel на сервер
+  ansible.builtin.copy:
+    src: "{{ orders_wheel }}"
+    dest: "/opt/orders/{{ orders_wheel | basename }}"
+    owner: deploy
+    group: deploy
+    mode: '0644'
+  register: orders_package
 
-# Что здесь должно появиться:
-#   - окружение Python в каталоге приложения
-#   - файл настроек из шаблона: адрес базы данных, адрес соседнего сервиса
-#   - описание службы для надзирателя в /etc/supervisor/conf.d/
-#   - перезапуск службы через обработчик, а не напрямую
-#
-# Проверка: после запуска сценария приложение отвечает на служебный запрос
-#     curl http://localhost:8101/health
-#
-# Полезное на сервере:
-#     supervisorctl status          что запущено
-#     supervisorctl restart orders  перезапустить службу
-#     supervisorctl tail -f orders  смотреть вывод
-#
-# Подсказка:
-#   ansible.builtin.pip        установка пакета в окружение
-#   ansible.builtin.template   файл настроек из шаблона
-#   ansible.builtin.copy       описание службы
-#   notify + handlers          перезапуск только когда что-то изменилось
+- name: Установить приложение в отдельное окружение
+  ansible.builtin.pip:
+    name: "/opt/orders/{{ orders_wheel | basename }}"
+    virtualenv: /opt/orders/venv
+    virtualenv_command: /usr/bin/python3 -m venv
+    extra_args: "{{ '--force-reinstall' if orders_package.changed else omit }}"
+  become_user: deploy
+  environment:
+    PIP_DEFAULT_TIMEOUT: '60'
+    PIP_RETRIES: '5'
+  notify: Перезапустить orders
 
-- name: Заглушка, чтобы сценарий запускался до того, как вы его напишете
-  ansible.builtin.debug:
-    msg: "Роль app пока пустая."
+- name: Проверить установленную версию
+  ansible.builtin.command:
+    argv:
+      - /opt/orders/venv/bin/python
+      - -c
+      - "import importlib.metadata; print(importlib.metadata.version('orders'))"
+  register: orders_installed_version
+  changed_when: false
+  failed_when: orders_installed_version.stdout | trim != orders_version
+
+- name: Создать настройки приложения
+  ansible.builtin.template:
+    src: orders.env.j2
+    dest: /opt/orders/.env
+    owner: deploy
+    group: deploy
+    mode: '0600'
+  no_log: true
+  notify: Перезапустить orders
+
+- name: Настроить службу Supervisor
+  ansible.builtin.template:
+    src: orders.conf.j2
+    dest: /etc/supervisor/conf.d/orders.conf
+    owner: root
+    group: root
+    mode: '0644'
+  notify: Перезапустить orders
+
+- name: Применить изменения до проверки приложения
+  ansible.builtin.meta: flush_handlers
+
+- name: Обеспечить запуск orders
+  community.general.supervisorctl:
+    name: orders
+    state: started
+
+- name: Проверить здоровье приложения внутри сервера
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8000/health
+    status_code: 200
+    return_content: true
+    timeout: 3
+  register: orders_health
+  until: >-
+    orders_health.status == 200 and
+    orders_health.json.status | default('') == 'ok' and
+    orders_health.json.service | default('') == 'orders'
+  retries: 10
+  delay: 2

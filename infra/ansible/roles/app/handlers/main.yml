@@ -1,0 +1,4 @@
+- name: Перезапустить orders
+  community.general.supervisorctl:
+    name: orders
+    state: restarted
