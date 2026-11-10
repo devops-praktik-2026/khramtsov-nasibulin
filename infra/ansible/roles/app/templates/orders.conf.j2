@@ -1,0 +1,10 @@
+[program:orders]
+directory=/opt/orders
+command=/opt/orders/venv/bin/uvicorn orders.main:app --host 0.0.0.0 --port 8000
+user=deploy
+autostart=true
+autorestart=true
+stopasgroup=true
+killasgroup=true
+stdout_logfile=/var/log/orders.log
+stderr_logfile=/var/log/orders-error.log

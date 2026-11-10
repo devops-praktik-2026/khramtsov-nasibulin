@@ -1,5 +1,6 @@
 # Окружение и временные файлы
 .venv/
+.venv-ansible/
 __pycache__/
 *.py[cod]
 .pytest_cache/
@@ -38,3 +39,6 @@ id_rsa*
 .idea/
 .vscode/
 .DS_Store
+
+infra/ansible/inventory.ini
+infra/ansible/vars.local.yml

@@ -102,8 +102,6 @@ Makefile             короткие команды: make help
 
 ### Основные команды
 
-Одинаковые на всех системах, включая Windows.
-
 ```
 make help      список всех команд
 make setup     создать окружение и поставить зависимости
@@ -131,8 +129,7 @@ make check
 А если `make` ещё не стоит — то же самое напрямую:
 
 ```bash
-python3 scripts/check_env.py     # Linux, macOS, WSL
-python scripts\check_env.py      # Windows
+python3 scripts/check_env.py
 ```
 
 Она назовёт всё, чего не хватает, и что с этим делать. Ниже подробности.
@@ -146,9 +143,6 @@ python scripts\check_env.py      # Windows
 | **Git** | вся работа с кодом | `git --version` |
 | **make** | короткие команды проекта | `make --version` |
 
-`make` ставится на все системы, включая Windows, — команды у всех получаются
-одинаковые. Где его взять на Windows, написано ниже.
-
 Плюс **5–10 ГБ свободного места** на диске: образы и данные занимают заметно.
 
 ### Понадобится позже
@@ -159,41 +153,6 @@ python scripts\check_env.py      # Windows
 | **docker compose** | запуск всей системы одной командой | `docker compose version` |
 
 
-
-
-#### Про каждую из трёх программ
-
-**Python.** Если ставите вручную с [python.org](https://www.python.org/downloads/),
-на первом экране установщика обязательно отметьте **Add python.exe to PATH**.
-Это самая частая причина того, что дальше ничего не работает. Признак беды —
-сообщение «py не является внутренней или внешней командой»: переустановите
-с этой галочкой.
-
-**Git.** Ставится с [git-scm.com](https://git-scm.com/download/win), если
-winget недоступен. Все настройки установщика можно оставить по умолчанию.
-
-**make.** Пакет `ezwinports.make` — это GNU Make 4.4.1, современная версия.
-Не берите `GnuWin32.Make`: там версия 3.81 от 2006 года, и она спотыкается
-на путях с пробелами. Другие способы, если winget нет:
-
-```powershell
-choco install make        # если стоит Chocolatey
-scoop install main/make   # если стоит Scoop
-```
-
-Можно и вручную: [архив ezwinports](https://sourceforge.net/projects/ezwinports/files/),
-файл вида `make-4.4.1-without-guile-w32-bin.zip` — распаковать, а папку `bin`
-добавить в переменную среды PATH.
-
-#### Если winget не находит пакеты
-
-Обновите список источников (`winget source update`) или поставьте «Установщик
-приложений» из Microsoft Store — winget входит в его состав.
-
-#### Терминал
-
-Подойдёт любой: Windows Terminal, встроенный PowerShell, терминал внутри
-VS Code. `cmd` тоже работает, но примеры в курсе рассчитаны на PowerShell.
 
 
 ### macOS
@@ -243,9 +202,6 @@ sudo usermod -aG docker $USER
 | `make up` | `docker compose up --build -d` |
 | `make down` | `docker compose down -v` |
 
-Пути здесь показаны для Linux и macOS. На Windows окружение устроено иначе —
-вместо `.venv/bin/` подставляется `.venv\Scripts\`, вместо `python3` — `py`.
-Makefile делает это сам, вручную ничего менять не нужно.
 
 ### Если образы не скачиваются
 
@@ -350,3 +306,8 @@ SSH-сервера. Повторный `tofu plan` должен показыва
 
 Файл состояния и локальные `*.tfvars` не коммитятся.
 `.terraform.lock.hcl` коммитится: он фиксирует версию провайдера для пары.
+
+### Настройка серверов Ansible (карточка 3.1)
+
+Инструкция с объяснениями, командами и результатами проверок:
+[docs/ansible.md](docs/ansible.md).
