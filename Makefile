@@ -50,7 +50,7 @@ else
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help check setup test cov lint fmt run run-orders migrate up down logs ps clean
+.PHONY: help check setup test test-integration test-compose cov lint fmt run run-orders migrate up down logs ps clean
 
 help: ## Показать список команд
 	@$(PY) $(COMMANDS)
@@ -66,6 +66,12 @@ setup: ## Создать окружение и поставить зависим
 
 test: ## Прогнать все тесты
 	$(PYTEST)
+
+test-integration: ## Проверить связку сервисов и недоступность сервиса клиентов
+	$(PYTHON) -m pytest -c tests/integration/pytest.ini tests/integration
+
+test-compose: ## Проверить отказ и восстановление сервисов в Docker Compose
+	$(PY) -m unittest discover -s tests/compose -v
 
 cov: ## Прогнать тесты и показать покрытие построчно
 	$(PYTEST) --cov-report=term-missing
