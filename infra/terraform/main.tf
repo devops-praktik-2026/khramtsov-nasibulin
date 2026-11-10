@@ -13,12 +13,12 @@
 # Вместо tofu можно писать terraform — язык описания одинаковый.
 
 terraform {
-  required_version = ">= 1.6"
+  required_version = ">= 1.10"
 
   required_providers {
     docker = {
       source  = "kreuzwerker/docker"
-      version = "~> 3.0"
+      version = "~> 3.9"
     }
   }
 
@@ -103,9 +103,13 @@ resource "docker_image" "server" {
   name = "${var.project_name}-server"
 
   build {
-    context = "${path.module}/../server-image"
+    # Buildx используется и на Windows; образ серверов всегда Linux.
+    context    = abspath("${path.module}/../server-image")
+    dockerfile = abspath("${path.module}/../server-image/Dockerfile")
+    builder    = "default"
+    platform   = "linux/amd64"
     build_args = {
-      SSH_PUBLIC_KEY = trimspace(file(var.ssh_public_key_path))
+      SSH_PUBLIC_KEY = trimspace(file(pathexpand(var.ssh_public_key_path)))
     }
   }
 }
