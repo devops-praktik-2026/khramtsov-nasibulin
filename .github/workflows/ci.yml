@@ -58,6 +58,24 @@ jobs:
       - name: Прогнать тесты
         run: pytest --cov-report=term-missing
 
+  integration:
+    name: Связка сервисов
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Поставить зависимости обоих сервисов
+        run: pip install -e "./services/accounts[dev]" -e "./services/orders[dev]"
+
+      - name: Проверить создание заказа через оба сервиса
+        run: python -m pytest -c tests/integration/pytest.ini tests/integration
+
   docker:
     name: Сборка образов
     runs-on: ubuntu-latest
@@ -91,7 +109,7 @@ jobs:
 
   publish:
     name: Публикация образа
-    needs: [lint, tests, docker]
+    needs: [lint, tests, integration, docker]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
