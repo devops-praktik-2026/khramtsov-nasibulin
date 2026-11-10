@@ -23,8 +23,11 @@ dist/
 *.tfstate
 *.tfstate.*
 .terraform/
-.terraform.lock.hcl
 crash.log
+*.tfplan
+*.tfvars
+!*.tfvars.example
+.local/
 
 # Ключи доступа
 *.pem
