@@ -100,6 +100,16 @@ Makefile             короткие команды: make help
 
 ## Команды
 
+### Проверка связки сервисов (карточка 2.3)
+
+После `make setup` запустите:
+
+```bash
+python -m pytest -c tests/integration/pytest.ini tests/integration
+```
+
+### Основные команды
+
 Одинаковые на всех системах, включая Windows.
 
 ```
