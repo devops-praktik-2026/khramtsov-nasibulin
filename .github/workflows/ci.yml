@@ -73,7 +73,7 @@ jobs:
       - name: Поставить зависимости обоих сервисов
         run: pip install -e "./services/accounts[dev]" -e "./services/orders[dev]"
 
-      - name: Проверить создание заказа через оба сервиса
+      - name: Проверить связку сервисов и недоступность accounts
         run: python -m pytest -c tests/integration/pytest.ini tests/integration
 
   docker:
@@ -90,6 +90,9 @@ jobs:
 
       - name: Показать размеры образов
         run: docker images --format "{{.Repository}}:{{.Tag}}  {{.Size}}" | grep ':ci'
+
+      - name: Проверить чистый запуск и восстановление сервисов
+        run: python -m unittest discover -s tests/compose -v
 
   secrets-scan:
     name: Поиск паролей

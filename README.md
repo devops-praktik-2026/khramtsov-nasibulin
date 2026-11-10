@@ -108,6 +108,8 @@ Makefile             короткие команды: make help
 make help      список всех команд
 make setup     создать окружение и поставить зависимости
 make test      прогнать все тесты
+make test-integration  проверить связку сервисов и сбой сервиса клиентов
+make test-compose  проверить тот же сценарий в Docker Compose
 make cov       тесты с показом покрытия построчно
 make lint      проверить стиль кода
 make fmt       привести код к единому виду
@@ -231,6 +233,8 @@ sudo usermod -aG docker $USER
 | `make check` | `python3 scripts/check_env.py` |
 | `make setup` | `python3 -m venv .venv`, затем `.venv/bin/python -m pip install -e "./services/accounts[dev]" -e "./services/orders[dev]"` |
 | `make test` | `.venv/bin/pytest` |
+| `make test-integration` | `.venv/bin/python -m pytest -c tests/integration/pytest.ini tests/integration` |
+| `make test-compose` | `python3 -m unittest discover -s tests/compose -v` |
 | `make cov` | `.venv/bin/pytest --cov-report=term-missing` |
 | `make lint` | `.venv/bin/ruff check .` и `.venv/bin/ruff format --check .` |
 | `make fmt` | `.venv/bin/ruff format .` и `.venv/bin/ruff check --fix .` |
@@ -304,13 +308,22 @@ HTTP-запроса — `ACCOUNTS_TIMEOUT_SECONDS` (по умолчанию 2 с
 что делать, если сосед не отвечает, как выкатывать их по отдельности, как не
 сломать один, меняя другой.
 
-### Проверка связки сервисов (карточка 2.3)
+### Проверка связки сервисов (карточки 2.3 и 2.4)
 
 После `make setup` запустите:
 
 ```bash
-python -m pytest -c tests/integration/pytest.ini tests/integration
+make test-integration
 ```
+
+Тесты запускают сервисы локально с временными базами. Они проверяют создание
+заказа, ответ 503 при остановке сервиса клиентов и восстановление после его
+запуска. Отдельно проверяется тайм-аут при соединении, которое не отвечает:
+двухсекундное ожидание и изменённое значение настройки.
+
+Чтобы проверить тот же сценарий в Docker Compose, запустите `make test-compose`.
+Проверка создаёт отдельные контейнеры и временную базу, затем удаляет их.
+При запуске через Compose оба сервиса применяют свои миграции до приёма запросов.
 
 ### Учебный стенд (карточка 2.5)
 

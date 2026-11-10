@@ -1,4 +1,4 @@
-"""Создание заказа через два настоящих HTTP-сервиса без подмены accounts."""
+"""Проверка связки сервисов и поведения при недоступном accounts."""
 
 import os
 import socket
@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 @contextmanager
-def running_service(name, tmp_path, **settings):
+def running_service(name, tmp_path, port=None, **settings):
     """Применить миграции, запустить сервис и убрать процесс даже при ошибке."""
     service_dir = ROOT / "services" / name
     env = {
@@ -31,9 +31,10 @@ def running_service(name, tmp_path, **settings):
         check=True,
         timeout=30,
     )
-    with socket.socket() as listener:
-        listener.bind(("127.0.0.1", 0))
-        port = listener.getsockname()[1]
+    if port is None:
+        with socket.socket() as listener:
+            listener.bind(("127.0.0.1", 0))
+            port = listener.getsockname()[1]
 
     url = f"http://127.0.0.1:{port}"
     log_path = tmp_path / f"{name}.log"
@@ -124,3 +125,71 @@ def test_create_order_for_real_account(services):
         saved = client.get(f"{orders_url}/orders/{order['id']}")
         assert saved.status_code == 200, saved.text
         assert saved.json() == order
+
+
+def test_stopped_accounts_returns_503_and_recovers_after_restart(tmp_path):
+    with ExitStack() as stack:
+        client = stack.enter_context(httpx.Client(timeout=5, trust_env=False))
+        with running_service("accounts", tmp_path) as accounts_url:
+            orders_url = stack.enter_context(
+                running_service(
+                    "orders",
+                    tmp_path,
+                    ACCOUNTS_URL=accounts_url,
+                    ACCOUNTS_TIMEOUT_SECONDS="2",
+                )
+            )
+            account = client.post(
+                f"{accounts_url}/accounts",
+                json={"name": "Иван", "email": "ivan@example.com"},
+            )
+            assert account.status_code == 201, account.text
+            payload = {"account_id": account.json()["id"], "item": "Кофе", "quantity": 1}
+
+        started = time.monotonic()
+        response = client.post(f"{orders_url}/orders", json=payload)
+        elapsed = time.monotonic() - started
+
+        assert response.status_code == 503, response.text
+        assert response.json() == {"detail": "Сервис клиентов временно недоступен"}
+        assert elapsed < 3, f"Ответ занял {elapsed:.2f} с"
+        orders = client.get(f"{orders_url}/orders", params={"account_id": payload["account_id"]})
+        assert orders.status_code == 200, orders.text
+        assert orders.json() == []
+
+        with running_service("accounts", tmp_path, port=httpx.URL(accounts_url).port):
+            response = client.post(f"{orders_url}/orders", json=payload)
+            assert response.status_code == 201, response.text
+            assert response.json()["account_id"] == payload["account_id"]
+
+
+@pytest.mark.parametrize(
+    ("timeout", "minimum", "maximum"),
+    [(0.4, 0.3, 1.5), (2.0, 1.8, 3.0)],
+)
+def test_silent_accounts_respects_configured_timeout(tmp_path, timeout, minimum, maximum):
+    # Сокет принимает соединение, но не читает запрос и не отправляет ответ.
+    with socket.socket() as listener:
+        listener.bind(("127.0.0.1", 0))
+        listener.listen()
+        accounts_url = f"http://127.0.0.1:{listener.getsockname()[1]}"
+        with running_service(
+            "orders",
+            tmp_path,
+            ACCOUNTS_URL=accounts_url,
+            ACCOUNTS_TIMEOUT_SECONDS=str(timeout),
+        ) as orders_url:
+            with httpx.Client(timeout=5, trust_env=False) as client:
+                started = time.monotonic()
+                response = client.post(
+                    f"{orders_url}/orders",
+                    json={"account_id": 1, "item": "Кофе", "quantity": 1},
+                )
+                elapsed = time.monotonic() - started
+
+                assert response.status_code == 503, response.text
+                assert response.json() == {"detail": "Сервис клиентов временно недоступен"}
+                assert minimum <= elapsed < maximum, f"Ответ занял {elapsed:.2f} с"
+                orders = client.get(f"{orders_url}/orders", params={"account_id": 1})
+                assert orders.status_code == 200, orders.text
+                assert orders.json() == []
