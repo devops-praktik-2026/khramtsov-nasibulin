@@ -50,7 +50,7 @@ else
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help check setup test test-integration test-compose cov lint fmt run run-orders migrate up down logs ps clean
+.PHONY: help check setup test test-integration test-compose test-infra inventory state-up cov lint fmt run run-orders migrate up down logs ps clean
 
 help: ## Показать список команд
 	@$(PY) $(COMMANDS)
@@ -72,6 +72,16 @@ test-integration: ## Проверить связку сервисов и нед�
 
 test-compose: ## Проверить отказ и восстановление сервисов в Docker Compose
 	$(PY) -m unittest discover -s tests/compose -v
+
+test-infra: ## Проверить безопасное формирование inventory
+	$(PY) -m unittest discover -s tests/infra -v
+
+inventory: ## Сформировать inventory из текущего состояния OpenTofu
+	$(PY) scripts/write_inventory.py
+
+state-up: ## Поднять MinIO и включить версии состояния (доступы задать в окружении)
+	docker compose -f tools/state/compose.yaml up -d --build --wait minio
+	docker compose -f tools/state/compose.yaml run --rm init
 
 cov: ## Прогнать тесты и показать покрытие построчно
 	$(PYTEST) --cov-report=term-missing

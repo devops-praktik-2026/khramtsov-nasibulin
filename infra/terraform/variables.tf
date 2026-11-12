@@ -1,5 +1,5 @@
 # Значения, которые могут отличаться у разных пар.
-# Пароль здесь учебный и нужен только на своей машине. Настоящие пароли
+# Пароль передаётся через TF_VAR_db_password или игнорируемый *.tfvars.
 
 variable "project_name" {
   description = "Приставка в именах создаваемых объектов"
@@ -38,10 +38,20 @@ variable "db_user" {
 }
 
 variable "db_password" {
-  description = "Пароль базы данных (учебный, только для стенда)"
+  description = "Пароль базы данных: задайте TF_VAR_db_password вне Git"
   type        = string
-  default     = "praktikum"
   sensitive   = true
+}
+
+variable "ansible_host" {
+  description = "Адрес Docker-хоста из Ansible: host.docker.internal в контейнере, 127.0.0.1 на хосте"
+  type        = string
+  default     = "host.docker.internal"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._:-]+$", var.ansible_host))
+    error_message = "Укажите имя или IP-адрес хоста без пробелов и параметров inventory."
+  }
 }
 
 variable "db_name" {

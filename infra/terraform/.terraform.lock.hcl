@@ -6,7 +6,18 @@ provider "registry.opentofu.org/kreuzwerker/docker" {
   constraints = "~> 3.9"
   hashes = [
     "h1:EAdNh5KgGPJT5jm848MRIfNfHUVJeTBdKKcFLax5g38=",
+    "h1:Eglp2bA01CEx8KV/K9CMZ1deQaWKW5HVhE2n+2jIp20=",
+    "h1:G/077y/oYgghD2b+X1RLgfcvPhy2SKmbKuLs9DNNCtc=",
+    "h1:MmhVJBgNpE2Fbksv/XObZJncwm4th4mFE7Ai+6LiIy4=",
+    "h1:Q0p3icHxAgpepYKx8gmg8pkfhgbNEeTeesjAqCrd8co=",
+    "h1:R6PZNIJ3wO5UEOA1YNntoYA9ZQWi3CuX1hADvxTMOdM=",
+    "h1:SKvPUrYkuuFYI9+nuvwkQhTStU67njNrNYUcfTvFnq8=",
+    "h1:VSqlOY7A//UzK89fphsLnCXtlAVE58Qg9kb0A3zTA8Y=",
+    "h1:bk/xY7+9c6rnsdp3zXIZaY8b9E3FNQUtJcCCsdkgEec=",
+    "h1:h/BTzZtag+INPIDWKR+ZMA4K+MFLjJDbkKNc4vIknn0=",
+    "h1:kOwGKqVcyI5i0ewb4hIxWbuGw9jS8CTj/dMLfCwMyJ8=",
     "h1:o/2lXPHpHZr4fuVmCgcJu8Dk3/bnL6qp8fr0JM36bBM=",
+    "h1:p65AjYSOmmHPjKkIYlEnxSMyrprTHKf1qBzKhCnCtG8=",
     "zh:0ead8281830e9b9496651282235d9a139ba1b1b6ff79e395eb8c78658dc446b9",
     "zh:0f17d37d8d3872df3fb75c68b5272e0c981343f53b506a9675b4405191edd3ef",
     "zh:11d50b37323874427c6d2a08b737d3c7707c8301fdd236c94485cf2828d0b14b",

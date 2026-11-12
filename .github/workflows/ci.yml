@@ -58,6 +58,27 @@ jobs:
       - name: Прогнать тесты
         run: pytest --cov-report=term-missing
 
+  infrastructure:
+    name: Описание стенда
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: "1.13.9"
+          tofu_wrapper: false
+      - name: Проверить генератор inventory
+        run: python -m unittest discover -s tests/infra -v
+      - name: Проверить описание без доступа к состоянию
+        working-directory: infra/terraform
+        run: |
+          tofu fmt -check
+          tofu init -backend=false -input=false
+          tofu validate
+
   integration:
     name: Связка сервисов
     runs-on: ubuntu-latest
@@ -112,7 +133,7 @@ jobs:
 
   publish:
     name: Публикация образа
-    needs: [lint, tests, integration, docker]
+    needs: [lint, tests, infrastructure, integration, docker, secrets-scan]
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:

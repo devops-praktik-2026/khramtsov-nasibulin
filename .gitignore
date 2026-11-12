@@ -18,6 +18,8 @@ dist/
 # Настройки с паролями — в репозиторий не попадают никогда.
 # Образец без секретов лежит в .env.example
 .env
+.env.*
+!.env.example
 
 # Состояние инфраструктуры. Там адреса, идентификаторы и иногда пароли.
 # На занятии 5 разберём, почему этот файл нельзя хранить рядом с кодом.
@@ -27,6 +29,7 @@ dist/
 crash.log
 *.tfplan
 *.tfvars
+*.tfvars.json
 !*.tfvars.example
 .local/
 
@@ -34,6 +37,10 @@ crash.log
 *.pem
 *.key
 id_rsa*
+id_ed25519*
+*.local.yml
+*.local.hcl
+*.tfbackend
 
 # Редакторы
 .idea/
