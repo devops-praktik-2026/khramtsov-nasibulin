@@ -290,8 +290,10 @@ make test-integration
 доступность сборщика можно проверить командой `docker buildx ls`.
 
 ```bash
+# Сначала подготовьте MinIO и переменные доступа по docs/state.md.
 cd infra/terraform
 tofu init
+# Для существующего локального state: tofu init -migrate-state
 tofu plan
 tofu apply
 tofu state list
@@ -311,3 +313,10 @@ SSH-сервера. Повторный `tofu plan` должен показыва
 
 Инструкция с объяснениями, командами и результатами проверок:
 [docs/ansible.md](docs/ansible.md).
+
+### Состояние, inventory и секреты (карточки 3.2–3.4)
+
+[docs/state.md](docs/state.md) — запуск MinIO, перенос существующего состояния,
+проверка блокировки и восстановление стенда. `make state-up` поднимает отдельное
+хранилище, `make inventory` формирует список серверов, `make test-infra`
+проверяет генератор. Пароль базы передаётся через `TF_VAR_db_password`.

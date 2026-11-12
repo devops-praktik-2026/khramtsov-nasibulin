@@ -10,7 +10,7 @@
 #   tofu apply     привести стенд к описанному виду
 #   tofu destroy   удалить всё описанное здесь
 #
-# Вместо tofu можно писать terraform — язык описания одинаковый.
+# S3-блокировка требует OpenTofu 1.10+.
 
 terraform {
   required_version = ">= 1.10"
@@ -22,23 +22,20 @@ terraform {
     }
   }
 
-  # ЗАДАНИЕ: включите хранение файла состояния отдельно
-  # от вашей машины. Пока этот блок закомментирован, состояние лежит
-  # рядом с описанием, и одновременная работа двоих ломает стенд —
-  # 
-  #
-  # backend "s3" {
-  #   bucket                      = "praktikum-state"
-  #   key                         = "stand/terraform.tfstate"
-  #   endpoints                   = { s3 = "http://localhost:9000" }
-  #   region                      = "ru-central1"
-  #   skip_credentials_validation = true
-  #   skip_region_validation      = true
-  #   skip_requesting_account_id  = true
-  #   skip_s3_checksum            = true
-  #   use_path_style              = true
-  #   use_lockfile                = true
-  # }
+  # MinIO запускается отдельно от стенда: tofu destroy его не удаляет.
+  # Доступы берутся только из AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY.
+  backend "s3" {
+    bucket                      = "praktikum-state"
+    key                         = "stand/terraform.tfstate"
+    region                      = "us-east-1"
+    endpoints                   = { s3 = "http://127.0.0.1:9000" }
+    use_path_style              = true
+    use_lockfile                = true
+    skip_credentials_validation = true
+    skip_region_validation      = true
+    skip_requesting_account_id  = true
+    skip_s3_checksum            = true
+  }
 }
 
 provider "docker" {}

@@ -49,7 +49,9 @@ ssh-add "$ANSIBLE_PRIVATE_KEY_FILE"
 
 ```bash
 cd infra/terraform
+# Сначала подготовьте MinIO и доступы по state.md.
 tofu init
+# При переносе прежнего state: tofu init -migrate-state
 tofu plan
 tofu apply
 tofu output servers
@@ -63,7 +65,8 @@ python3 -m venv .venv-ansible
 . .venv-ansible/bin/activate
 python -m pip install -r tools/ansible/requirements.txt
 python -m build --wheel --outdir dist services/orders
-cp infra/ansible/inventory.example.ini infra/ansible/inventory.ini
+# Для запуска на хосте задайте ansible_host = "127.0.0.1" в tfvars и tofu apply.
+python scripts/write_inventory.py
 cp infra/ansible/vars.example.yml infra/ansible/vars.local.yml
 ```
 
