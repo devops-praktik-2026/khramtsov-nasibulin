@@ -74,8 +74,9 @@ cp infra/ansible/vars.example.yml infra/ansible/vars.local.yml
 В `vars.local.yml` замените образцы **открытыми** ключами обоих участников.
 При индивидуальной работе оставьте один ключ. Закрытые ключи туда не добавляются.
 Inventory, локальные переменные, окружение и wheel исключены из Git.
-`orders_version` по умолчанию соответствует `0.1.0` в
-`services/orders/pyproject.toml`; при смене версии обновите переменную.
+Для установки локального wheel роль читает `orders_version` из
+`services/orders/pyproject.toml`. Для установки опубликованной версии передайте
+`-e version=vX.Y.Z` и параметры релиза по [инструкции дежурного](runbook.md).
 
 Коллекции `ansible.posix` и `community.general` входят в пакет Ansible.
 Их список также есть в `infra/ansible/requirements.yml` для отдельной установки
@@ -111,9 +112,9 @@ ssh -i "$ANSIBLE_PRIVATE_KEY_FILE" -p 2201 deploy@127.0.0.1 'sudo supervisorctl 
 ssh -i "$ANSIBLE_PRIVATE_KEY_FILE" -p 2202 deploy@127.0.0.1 'sudo supervisorctl status orders'
 ```
 
-Оба ответа должны содержать `{"status":"ok","service":"orders"}`,
-Supervisor должен показать `RUNNING`. Ansible также проверяет эти поля внутри
-каждого сервера по `127.0.0.1:8000` с ожиданием запуска.
+Оба ответа должны содержать `status=ok`, `service=orders` и версию
+установленного пакета в поле `version`. Supervisor должен показать `RUNNING`.
+При установке релиза Ansible дожидается ответа нужной версии на каждом сервере.
 
 ## Адреса и границы проверки
 

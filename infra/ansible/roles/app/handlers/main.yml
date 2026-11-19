@@ -1,4 +1,17 @@
+- name: Применить описание orders
+  ansible.builtin.command:
+    argv: [/usr/bin/supervisorctl, update, orders]
+  become: true
+  register: orders_supervisor_update
+  changed_when: orders_supervisor_update.stdout | trim != ''
+
 - name: Перезапустить orders
-  community.general.supervisorctl:
-    name: orders
-    state: restarted
+  ansible.builtin.command:
+    argv: [/usr/bin/supervisorctl, restart, orders]
+  become: true
+  register: orders_restart
+  changed_when: true
+  # restart остановленного процесса может вернуть ошибку stop даже после успешного start.
+  failed_when: orders_restart.rc != 0 and 'orders: started' not in orders_restart.stdout_lines
+  # update сам запускает процесс при добавлении или изменении его определения.
+  when: (orders_supervisor_update.stdout | default('') | trim) == ''

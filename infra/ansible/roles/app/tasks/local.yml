@@ -1,0 +1,39 @@
+- name: Передать локальный wheel на сервер
+  ansible.builtin.copy:
+    src: "{{ orders_wheel }}"
+    dest: "/opt/orders/{{ orders_wheel | basename }}"
+    owner: deploy
+    group: deploy
+    mode: '0644'
+  register: orders_package
+
+- name: Установить локальный wheel в отдельное окружение
+  ansible.builtin.pip:
+    name: "/opt/orders/{{ orders_wheel | basename }}"
+    virtualenv: /opt/orders/venv
+    virtualenv_command: /usr/bin/python3 -m venv
+    extra_args: "{{ '--force-reinstall' if orders_package.changed else omit }}"
+  become_user: deploy
+  environment:
+    PIP_DEFAULT_TIMEOUT: '60'
+    PIP_RETRIES: '5'
+  notify: Перезапустить orders
+
+- name: Проверить версию локального wheel
+  ansible.builtin.command:
+    argv:
+      - /opt/orders/venv/bin/python
+      - -c
+      - "from importlib.metadata import version; print(version('orders'))"
+  register: orders_installed_version
+  changed_when: false
+  failed_when: orders_installed_version.rc != 0 or orders_installed_version.stdout | trim != orders_version
+
+- name: Определить, содержит ли локальный wheel команду миграций
+  ansible.builtin.stat:
+    path: /opt/orders/venv/bin/orders-migrate
+    get_attributes: false
+    get_checksum: false
+    get_mime: false
+  register: orders_local_migrator
+  failed_when: not orders_local_migrator.stat.exists and orders_version != '0.1.0'

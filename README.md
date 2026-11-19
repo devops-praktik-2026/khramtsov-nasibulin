@@ -112,6 +112,7 @@ make cov       тесты с показом покрытия построчно
 make lint      проверить стиль кода
 make fmt       привести код к единому виду
 make run       запустить сервис клиентов на своей машине
+make run-orders применить миграции и запустить сервис заказов локально
 make migrate   применить миграции базы данных
 make up        поднять всю систему в контейнерах
 make down      остановить и удалить данные
@@ -199,6 +200,7 @@ sudo usermod -aG docker $USER
 | `make fmt` | `.venv/bin/ruff format .` и `.venv/bin/ruff check --fix .` |
 | `make migrate` | `cd services/accounts`, затем `../../.venv/bin/alembic upgrade head` |
 | `make run` | миграции, затем `uvicorn accounts.main:app --reload --port 8001` |
+| `make run-orders` | миграции базы заказов, затем `uvicorn orders.main:app --reload --port 8002` |
 | `make up` | `docker compose up --build -d` |
 | `make down` | `docker compose down -v` |
 
@@ -320,3 +322,10 @@ SSH-сервера. Повторный `tofu plan` должен показыва
 проверка блокировки и восстановление стенда. `make state-up` поднимает отдельное
 хранилище, `make inventory` формирует список серверов, `make test-infra`
 проверяет генератор. Пароль базы передаётся через `TF_VAR_db_password`.
+
+### Выпуск и возврат orders (карточки 4.1–4.5)
+
+Метка `vX.Y.Z` запускает сборку wheel. Ansible сверяет SHA256 из GitHub
+Release и проверяет `/health` каждого сервера после переключения версии.
+Команды установки и возврата, порядок миграции базы и действия при трёх
+учебных отказах приведены в [инструкции дежурного](docs/runbook.md).

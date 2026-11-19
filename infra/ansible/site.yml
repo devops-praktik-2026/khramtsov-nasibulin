@@ -1,11 +1,29 @@
 - name: Настроить серверы сервиса заказов
   hosts: app
   become: true
+  gather_facts: false
+  serial: 1
+  any_errors_fatal: true
   pre_tasks:
     - name: Проверить режим запуска
       ansible.builtin.assert:
         that: not ansible_check_mode
         fail_msg: Для статической проверки используйте --syntax-check; установка требует обычного запуска.
+
+    - name: Прочитать постоянные параметры стенда, если они сохранены рядом с inventory
+      ansible.builtin.include_vars: "{{ item }}"
+      loop: "{{ query('ansible.builtin.fileglob', playbook_dir + '/vars.local.yml') }}"
+      no_log: true
+
+    - name: Проверить наличие подготовленного каталога сервиса
+      ansible.builtin.stat:
+        path: /opt/orders
+        get_attributes: false
+        get_checksum: false
+        get_mime: false
+      register: orders_root
+      when: version is defined
   roles:
-    - base
+    - role: base
+      when: version is not defined or not orders_root.stat.isdir | default(false)
     - app

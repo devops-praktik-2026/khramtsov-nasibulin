@@ -46,6 +46,42 @@ jobs:
             dist/SHA256SUMS
           if-no-files-found: error
 
+  rehearsal:
+    name: Обновление и возврат на двух серверах
+    if: github.event_name == 'pull_request'
+    needs: package
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      # Снимок выпуска 0.1.0 доступен и до первой публикации метки.
+      - uses: actions/checkout@v4
+        with:
+          ref: ec015f9fb7cddd356802810d85657146e8cde67a
+          path: baseline
+          sparse-checkout: services/orders
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: orders-release
+          path: candidate
+      - name: Собрать прежнюю версию и проверить текущий пакет из PR
+        env:
+          REHEARSAL_REPORT: ${{ runner.temp }}/release-rehearsal.md
+        run: |
+          python -m pip install build
+          python scripts/build_release.py --source baseline/services/orders --tag v0.1.0 --outdir "$RUNNER_TEMP/old"
+          (cd candidate && sha256sum --check SHA256SUMS)
+          bash tests/release/rehearse.sh "$RUNNER_TEMP"/old/*.whl candidate/*.whl
+      - name: Записать результаты стенда
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/release-rehearsal.md" ]]; then
+            cat "$RUNNER_TEMP/release-rehearsal.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   publish:
     name: Опубликовать GitHub Release
     needs: package
