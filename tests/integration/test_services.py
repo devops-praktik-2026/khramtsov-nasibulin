@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 from contextlib import ExitStack, contextmanager
+from importlib.metadata import version
 from pathlib import Path
 
 import httpx
@@ -37,6 +38,9 @@ def running_service(name, tmp_path, port=None, **settings):
             port = listener.getsockname()[1]
 
     url = f"http://127.0.0.1:{port}"
+    expected_health = {"status": "ok", "service": name}
+    if name == "orders":
+        expected_health["version"] = version("orders")
     log_path = tmp_path / f"{name}.log"
     with log_path.open("w", encoding="utf-8") as log:
         process = subprocess.Popen(
@@ -61,10 +65,7 @@ def running_service(name, tmp_path, port=None, **settings):
                 while process.poll() is None and time.monotonic() < deadline:
                     try:
                         response = client.get(f"{url}/health")
-                        if response.status_code == 200 and response.json() == {
-                            "status": "ok",
-                            "service": name,
-                        }:
+                        if response.status_code == 200 and response.json() == expected_health:
                             break
                     except httpx.RequestError:
                         pass

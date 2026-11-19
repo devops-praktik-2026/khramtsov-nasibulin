@@ -1,8 +1,6 @@
-"""Единственный тест, который проходит с самого начала.
+"""Проверяем состояние и установленную версию сервиса заказов."""
 
-Он нужен, чтобы на первом занятии вы увидели зелёную проверку и убедились,
-что окружение собрано правильно.
-"""
+from importlib.metadata import version
 
 from fastapi.testclient import TestClient
 
@@ -11,8 +9,8 @@ from orders.main import app
 client = TestClient(app)
 
 
-def test_health_returns_ok():
+def test_health_reports_installed_version():
     response = client.get("/health")
 
     assert response.status_code == 200
-    assert response.json() == {"status": "ok", "service": "orders"}
+    assert response.json() == {"status": "ok", "service": "orders", "version": version("orders")}

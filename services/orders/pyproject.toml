@@ -14,6 +14,9 @@ dependencies = [
     "psycopg[binary]>=3.2",
 ]
 
+[project.scripts]
+orders-migrate = "orders.migrate:main"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.3",
@@ -26,4 +29,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["orders"]
+packages = ["orders", "orders.migrations", "orders.migrations.versions"]
+
+[tool.setuptools.package-data]
+"orders.migrations" = ["alembic.ini", "script.py.mako"]

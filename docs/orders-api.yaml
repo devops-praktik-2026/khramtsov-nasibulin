@@ -15,8 +15,34 @@ servers:
 tags:
   - name: Заказы
     description: Создание и чтение заказов
+  - name: Служебное
+    description: Проверка запущенного процесса
 
 paths:
+  /health:
+    get:
+      tags: [Служебное]
+      operationId: health
+      summary: Узнать, какая версия orders отвечает на запросы
+      responses:
+        '200':
+          description: Процесс готов принимать запросы
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [status, service, version]
+                properties:
+                  status:
+                    type: string
+                    const: ok
+                  service:
+                    type: string
+                    example: orders
+                  version:
+                    type: string
+                    description: Версия установленного Python-пакета
+                    example: '0.1.0'
   /orders:
     post:
       tags:

@@ -2,8 +2,6 @@
 *
 !pyproject.toml
 !alembic.ini
-!migrations/
-!migrations/**
 !orders/
 !orders/**
 **/__pycache__/
