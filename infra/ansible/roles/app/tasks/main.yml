@@ -1,33 +1,5 @@
-- name: Передать wheel на сервер
-  ansible.builtin.copy:
-    src: "{{ orders_wheel }}"
-    dest: "/opt/orders/{{ orders_wheel | basename }}"
-    owner: deploy
-    group: deploy
-    mode: '0644'
-  register: orders_package
-
-- name: Установить приложение в отдельное окружение
-  ansible.builtin.pip:
-    name: "/opt/orders/{{ orders_wheel | basename }}"
-    virtualenv: /opt/orders/venv
-    virtualenv_command: /usr/bin/python3 -m venv
-    extra_args: "{{ '--force-reinstall' if orders_package.changed else omit }}"
-  become_user: deploy
-  environment:
-    PIP_DEFAULT_TIMEOUT: '60'
-    PIP_RETRIES: '5'
-  notify: Перезапустить orders
-
-- name: Проверить установленную версию
-  ansible.builtin.command:
-    argv:
-      - /opt/orders/venv/bin/python
-      - -c
-      - "import importlib.metadata; print(importlib.metadata.version('orders'))"
-  register: orders_installed_version
-  changed_when: false
-  failed_when: orders_installed_version.stdout | trim != orders_version
+- name: Выбрать установку из GitHub Release или из локального wheel
+  ansible.builtin.include_tasks: "{{ 'release.yml' if version is defined else 'local.yml' }}"
 
 - name: Создать настройки приложения
   ansible.builtin.template:
@@ -37,7 +9,30 @@
     group: deploy
     mode: '0600'
   no_log: true
+  register: orders_environment
   notify: Перезапустить orders
+
+- name: Обновить схему до переключения кода
+  ansible.builtin.script:
+    cmd: migrate_release.py
+    executable: "{{ orders_app_venv }}/bin/python"
+    chdir: /opt/orders
+  become_user: deploy
+  register: orders_schema
+  changed_when: "'upgraded' in orders_schema.stdout_lines"
+  when:
+    - orders_has_migrations
+    - orders_database_url.startswith('sqlite') or inventory_hostname == ansible_play_hosts_all[0]
+
+- name: Атомарно переключить ссылку на проверенную версию
+  ansible.builtin.file:
+    src: "{{ orders_release_dir }}"
+    dest: /opt/orders/current
+    state: link
+    follow: false
+  register: orders_current
+  notify: Перезапустить orders
+  when: version is defined
 
 - name: Настроить службу Supervisor
   ansible.builtin.template:
@@ -46,6 +41,30 @@
     owner: root
     group: root
     mode: '0644'
+  register: orders_supervisor_file
+  notify:
+    - Применить описание orders
+    - Перезапустить orders
+
+- name: Обнаружить описание orders, которое Supervisor ещё не применил
+  ansible.builtin.command:
+    argv: [/usr/bin/supervisorctl, reread]
+  register: orders_pending_config
+  changed_when: "'orders: changed' in orders_pending_config.stdout_lines or 'orders: available' in orders_pending_config.stdout_lines"
+  when: not orders_supervisor_file.changed
+  notify: Применить описание orders
+
+- name: Проверить, применил ли работающий процесс последнюю установку
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8000/health
+    timeout: 2
+  register: orders_running
+  failed_when: false
+  changed_when: >-
+    (orders_running.status | default(-1)) != 200 or (orders_running.json.status | default('')) != 'ok'
+    or (orders_running.json.service | default('')) != 'orders'
+    or (orders_running.json.version | default('')) != orders_app_version
+  when: orders_has_migrations and not (orders_current.changed or orders_environment.changed or orders_supervisor_file.changed)
   notify: Перезапустить orders
 
 - name: Применить изменения до проверки приложения
@@ -55,17 +74,7 @@
   community.general.supervisorctl:
     name: orders
     state: started
+  when: not ((orders_restart.changed | default(false)) or (orders_supervisor_update.changed | default(false)))
 
-- name: Проверить здоровье приложения внутри сервера
-  ansible.builtin.uri:
-    url: http://127.0.0.1:8000/health
-    status_code: 200
-    return_content: true
-    timeout: 3
-  register: orders_health
-  until: >-
-    orders_health.status == 200 and
-    orders_health.json.status | default('') == 'ok' and
-    orders_health.json.service | default('') == 'orders'
-  retries: 10
-  delay: 2
+- name: Проверить запущенный процесс до перехода к следующему серверу
+  ansible.builtin.import_tasks: health.yml

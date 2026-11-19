@@ -1,0 +1,56 @@
+x-server: &server
+  image: ${REHEARSAL_SERVER_IMAGE:?}
+  pull_policy: never
+  ports:
+    - "127.0.0.1::8000"
+  volumes:
+    - ${REHEARSAL_DIR:?}/key.pub:/run/rehearsal.pub:ro
+  tmpfs:
+    - /opt:exec,mode=755
+    - /tmp:exec,mode=1777
+    - /var/lib/apt/lists
+    - /var/cache/apt
+    - /home/deploy/.cache:uid=1000,gid=1000
+    - /home/deploy/.ansible:exec,uid=1000,gid=1000,mode=700
+  command:
+    - /bin/sh
+    - -ec
+    - |
+      install -o deploy -g deploy -m 600 /run/rehearsal.pub /home/deploy/.ssh/authorized_keys
+      exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
+  healthcheck:
+    test: ["CMD-SHELL", "test -s /run/sshd.pid && kill -0 \"$$(cat /run/sshd.pid)\""]
+    interval: 2s
+    timeout: 3s
+    retries: 30
+
+services:
+  server-1: *server
+  server-2: *server
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: orders
+      POSTGRES_DB: orders
+      POSTGRES_PASSWORD: ${REHEARSAL_DB_PASSWORD:?}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "orders", "-d", "orders"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+  controller:
+    image: ${REHEARSAL_CONTROLLER_IMAGE:?}
+    pull_policy: never
+    working_dir: /drill
+    command: ["python", "-u", "-m", "http.server", "8080", "--directory", "/drill/public"]
+    environment:
+      ANSIBLE_PRIVATE_KEY_FILE: /drill/key
+      ANSIBLE_PIPELINING: "true"
+      ANSIBLE_NOCOLOR: "true"
+    volumes:
+      - ${REHEARSAL_DIR:?}:/drill:ro
+    tmpfs:
+      - /root/.ansible
+      - /tmp:exec,mode=1777

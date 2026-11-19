@@ -100,7 +100,8 @@ migrate: ## Применить миграции базы данных к сер�
 run: migrate ## Запустить сервис клиентов: http://localhost:8001/docs
 	cd $(ACCOUNTS) && $(UVICORN_UP) accounts.main:app --reload --port 8001
 
-run-orders: ## Запустить сервис заказов: http://localhost:8002/docs
+run-orders: ## Применить миграции и запустить сервис заказов: http://localhost:8002/docs
+	cd $(ORDERS) && $(ALEMBIC_UP) upgrade head
 	cd $(ORDERS) && $(UVICORN_UP) orders.main:app --reload --port 8002
 
 up: ## Поднять всю систему в контейнерах

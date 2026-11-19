@@ -6,6 +6,7 @@
 """
 
 from logging.config import fileConfig
+from pathlib import Path
 
 from alembic import context
 from sqlalchemy import engine_from_config, pool
@@ -15,10 +16,16 @@ from orders.config import settings
 from orders.db import Base
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+# ConfigParser обрабатывает знак % в паролях и путях как начало подстановки.
+config.set_main_option("sqlalchemy.url", settings.database_url.replace("%", "%%"))
 
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    logging_config = (
+        config.config_file_name
+        if config.file_config.has_section("loggers")
+        else Path(__file__).with_name("alembic.ini")
+    )
+    fileConfig(logging_config)
 
 target_metadata = Base.metadata
 

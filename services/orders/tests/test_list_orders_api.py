@@ -66,6 +66,7 @@ def test_list_returns_complete_card_with_quantity_one(client, insert_orders):
             "account_id": 7,
             "item": "Кофе",
             "quantity": 1,
+            "customer_note": None,
             "created_at": "2026-10-01T10:00:00",
         }
     ]

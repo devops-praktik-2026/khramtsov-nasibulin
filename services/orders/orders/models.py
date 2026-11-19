@@ -17,6 +17,7 @@ class Order(Base):
     account_id: Mapped[int] = mapped_column(Integer, nullable=False)
     item: Mapped[str] = mapped_column(String(128), nullable=False)
     quantity: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    customer_note: Mapped[str | None] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

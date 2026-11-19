@@ -1,6 +1,6 @@
 - name: Проверить наличие открытых ключей
   ansible.builtin.assert:
-    that: deploy_public_keys | length > 0
+    that: version is defined or deploy_public_keys | length > 0
     fail_msg: Передайте открытые ключи в deploy_public_keys (см. vars.example.yml).
 
 - name: Установить системные зависимости

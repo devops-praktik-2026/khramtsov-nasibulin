@@ -4,6 +4,7 @@ import json
 import subprocess
 import tempfile
 import time
+import tomllib
 import unittest
 import uuid
 from pathlib import Path
@@ -33,9 +34,9 @@ def wait_until_healthy(url):
     deadline = time.monotonic() + 30
     while time.monotonic() < deadline:
         try:
-            status, _ = request(f"{url}/health")
+            status, health = request(f"{url}/health")
             if status == 200:
-                return
+                return health
         except (OSError, URLError):
             pass
         time.sleep(0.2)
@@ -83,7 +84,12 @@ class ComposeAvailabilityTest(unittest.TestCase):
                 accounts = f"http://{run_compose('port', 'accounts', '8000')}"
                 orders = f"http://{run_compose('port', 'orders', '8000')}"
                 wait_until_healthy(accounts)
-                wait_until_healthy(orders)
+                with (ROOT / "services/orders/pyproject.toml").open("rb") as manifest:
+                    version = tomllib.load(manifest)["project"]["version"]
+                self.assertEqual(
+                    wait_until_healthy(orders),
+                    {"status": "ok", "service": "orders", "version": version},
+                )
 
                 status, account = request(
                     f"{accounts}/accounts", {"name": "Иван", "email": "ivan@example.com"}

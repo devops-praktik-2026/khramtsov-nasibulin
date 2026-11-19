@@ -13,6 +13,7 @@ class BaseOrder(BaseModel):
     account_id: int
     item: str = Field(min_length=1, max_length=128, examples=["Кофе"])
     quantity: int = Field(ge=1)
+    customer_note: str | None = Field(default=None, max_length=255)
 
 
 class OrderCreate(BaseOrder):

@@ -1,6 +1,6 @@
 [program:orders]
 directory=/opt/orders
-command=/opt/orders/venv/bin/uvicorn orders.main:app --host 0.0.0.0 --port 8000
+command=/opt/orders/{{ 'current/' if version is defined else '' }}venv/bin/uvicorn orders.main:app --host 0.0.0.0 --port 8000
 user=deploy
 autostart=true
 autorestart=true

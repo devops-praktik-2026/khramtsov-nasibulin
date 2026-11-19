@@ -1,0 +1,15 @@
+- name: Проверить ответ /health на сервере
+  ansible.builtin.uri:
+    url: http://127.0.0.1:8000/health
+    status_code: 200
+    return_content: true
+    timeout: 3
+  register: orders_health
+  failed_when: >-
+    (orders_health.status | default(-1)) != 200 or
+    (orders_health.json.status | default('')) != 'ok' or
+    (orders_health.json.service | default('')) != 'orders' or
+    (orders_has_migrations and (orders_health.json.version | default('')) != orders_app_version)
+  until: orders_health is succeeded
+  retries: "{{ orders_health_retries | default(10) }}"
+  delay: 2
