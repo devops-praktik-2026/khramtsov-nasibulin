@@ -49,3 +49,30 @@ def test_migrate_can_preview_sql_without_opening_the_database(migration_cli, mon
     main()
     assert "CREATE TABLE orders" in capsys.readouterr().out
     assert not database.exists()
+
+
+def test_customer_note_upgrade_and_downgrade_preserve_orders(migration_cli):
+    database, migrate = migration_cli
+    migrate("upgrade", "483fb1e80029")
+    insert_order = "INSERT INTO orders (id, account_id, item, quantity) VALUES (?, ?, ?, ?)"
+    first = (11, 7, "Чай", 2)
+    second = (12, 7, "Кофе", 1)
+    with sqlite3.connect(database) as connection:
+        connection.execute(insert_order, first)
+
+    migrate("upgrade", "head")
+    with sqlite3.connect(database) as connection:
+        assert connection.execute("SELECT customer_note FROM orders WHERE id = 11").fetchone() == (
+            None,
+        )
+        # Запрос старого приложения по-прежнему создаёт заказ без примечания.
+        connection.execute(insert_order, second)
+        connection.execute("UPDATE orders SET customer_note = ? WHERE id = 12", ("Без звонка",))
+
+    migrate("downgrade", "483fb1e80029")
+    with sqlite3.connect(database) as connection:
+        assert "customer_note" not in [
+            row[1] for row in connection.execute("PRAGMA table_info(orders)")
+        ]
+        rows = connection.execute("SELECT id, account_id, item, quantity FROM orders ORDER BY id")
+        assert rows.fetchall() == [first, second]

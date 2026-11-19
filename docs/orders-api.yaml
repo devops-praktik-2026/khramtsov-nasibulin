@@ -243,6 +243,10 @@ components:
           type: integer
           minimum: 1
           description: Количество товара
+        customer_note:
+          type: [string, 'null']
+          maxLength: 255
+          description: Необязательное примечание клиента
         created_at:
           type: string
           format: date-time
@@ -270,6 +274,10 @@ components:
           type: integer
           minimum: 1
           description: Количество товара
+        customer_note:
+          type: [string, 'null']
+          maxLength: 255
+          description: Необязательное примечание клиента
 
     ErrorResponse:
       type: object

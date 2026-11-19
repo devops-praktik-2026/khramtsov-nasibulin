@@ -14,7 +14,19 @@ def test_create_order_returns_201(client: TestClient, quantity: int):
     assert body["account_id"] == payload["account_id"]
     assert body["item"] == payload["item"]
     assert body["quantity"] == payload["quantity"]
+    assert body["customer_note"] is None
     assert "created_at" in body
+
+
+def test_customer_note_is_saved_and_returned(client, order_payload):
+    note = "Позвонить за полчаса до доставки"
+    response = client.post("/orders", json=order_payload | {"customer_note": note})
+    assert response.status_code == 201
+    assert response.json()["customer_note"] == note
+
+    saved = client.get(f"/orders/{response.json()['id']}")
+    assert saved.status_code == 200
+    assert saved.json()["customer_note"] == note
 
 
 @pytest.mark.parametrize(
@@ -24,6 +36,7 @@ def test_create_order_returns_201(client: TestClient, quantity: int):
         {"quantity": 0},
         {"quantity": -1},
         {"account_id": "это-не-число"},
+        {"customer_note": "я" * 256},
     ],
 )
 def test_invalid_payload_returns_422(client, order_payload, broken_field):
