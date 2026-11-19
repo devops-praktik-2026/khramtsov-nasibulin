@@ -13,14 +13,14 @@
     get_checksum: false
     get_mime: false
   register: orders_verified
+  when: release_checksum is defined
 
 - name: Получить wheel для новой версии
-  when: not orders_verified.stat.exists
+  when: release_checksum is defined and not orders_verified.stat.exists
   block:
     - name: Потребовать источник и SHA256 для первой установки
       ansible.builtin.assert:
         that:
-          - release_checksum is defined
           - orders_release_base_url is match('^https?://[^/\s]+(/[^\s]*)?\Z')
         fail_msg: Для новой версии укажите release_repository и release_checksum из GitHub Release.
 

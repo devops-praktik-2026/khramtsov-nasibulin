@@ -22,10 +22,10 @@
         get_checksum: false
         get_mime: false
       register: orders_root
-      when: version is defined
+      when: version is defined and release_checksum is defined
   roles:
     - role: base
-      when: version is not defined or not orders_root.stat.isdir | default(false)
+      when: version is not defined or (release_checksum is defined and not orders_root.stat.isdir | default(false))
     - app
 
 - name: Подтвердить версию на всех выбранных серверах после переключения последнего

@@ -74,6 +74,7 @@
   community.general.supervisorctl:
     name: orders
     state: started
+  when: not ((orders_restart.changed | default(false)) or (orders_supervisor_update.changed | default(false)))
 
 - name: Проверить запущенный процесс до перехода к следующему серверу
   ansible.builtin.import_tasks: health.yml

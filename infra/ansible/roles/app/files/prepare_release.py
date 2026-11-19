@@ -38,6 +38,8 @@ def prepare(release: Path, expected: str) -> None:
     wheel = release / f"orders-{release.name}-py3-none-any.whl"
     marker = release / ".sha256"
     venv = release / "venv"
+    if not expected and not marker.is_file():
+        raise SystemExit("Для новой версии укажите release_repository и release_checksum.")
     release.mkdir(parents=True, exist_ok=True)
     with (release / ".install.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
