@@ -19,7 +19,7 @@ x-server: &server
       install -o deploy -g deploy -m 600 /run/rehearsal.pub /home/deploy/.ssh/authorized_keys
       exec /usr/bin/supervisord -n -c /etc/supervisor/supervisord.conf
   healthcheck:
-    test: ["CMD-SHELL", "supervisorctl status sshd | grep -q RUNNING"]
+    test: ["CMD-SHELL", "test -s /run/sshd.pid && kill -0 \"$$(cat /run/sshd.pid)\""]
     interval: 2s
     timeout: 3s
     retries: 30

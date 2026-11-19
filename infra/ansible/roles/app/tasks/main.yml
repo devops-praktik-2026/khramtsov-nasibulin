@@ -75,17 +75,5 @@
     name: orders
     state: started
 
-- name: Проверить здоровье приложения внутри сервера
-  ansible.builtin.uri:
-    url: http://127.0.0.1:8000/health
-    status_code: 200
-    return_content: true
-    timeout: 3
-  register: orders_health
-  until: >-
-    orders_health.status == 200 and
-    (orders_health.json.status | default('')) == 'ok' and
-    (orders_health.json.service | default('')) == 'orders' and
-    (not orders_has_migrations or (orders_health.json.version | default('')) == orders_app_version)
-  retries: 10
-  delay: 2
+- name: Проверить запущенный процесс до перехода к следующему серверу
+  ansible.builtin.import_tasks: health.yml

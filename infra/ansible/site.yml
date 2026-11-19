@@ -27,3 +27,16 @@
     - role: base
       when: version is not defined or not orders_root.stat.isdir | default(false)
     - app
+
+- name: Подтвердить версию на всех выбранных серверах после переключения последнего
+  hosts: app
+  gather_facts: false
+  any_errors_fatal: true
+  tasks:
+    - name: Одновременно проверить /health на выбранных серверах
+      ansible.builtin.include_role:
+        name: app
+        tasks_from: health
+      vars:
+        orders_health_retries: 0
+      when: version is defined
